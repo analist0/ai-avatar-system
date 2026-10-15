@@ -22,6 +22,8 @@ async def test_health_endpoint(client: AsyncClient):
     assert "status" in data
     assert "services" in data
     assert "timestamp" in data
+    assert data["hardware"]["profile"] == "workstation-12gb"
+    assert data["hardware"]["gpu_resident"] == ["musetalk"]
 
 
 @pytest.mark.asyncio

@@ -17,6 +17,7 @@ import numpy as np
 import soundfile as sf
 
 from app.config import settings
+from app.hardware import resolve_device
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +42,21 @@ class STTService:
         """Synchronous model load — run inside a thread to avoid blocking the loop."""
         from faster_whisper import WhisperModel
 
-        device = "cuda" if self._check_cuda() else "cpu"
-        compute_type = "float16" if device == "cuda" else "int8"
-        logger.info(f"Loading Whisper model {self.model_name!r} on {device} ({compute_type})…")
-        model = WhisperModel(self.model_name, device=device, compute_type=compute_type)
+        device = resolve_device(settings.STT_DEVICE, self._check_cuda())
+        compute_type = settings.WHISPER_COMPUTE_TYPE if device == "cpu" else "float16"
+        if device == "cpu" and compute_type == "float16":
+            compute_type = "int8"
+        logger.info(
+            f"Loading Whisper model {self.model_name!r} on {device} ({compute_type}, "
+            f"cpu_threads={settings.TORCH_CPU_THREADS})…"
+        )
+        model = WhisperModel(
+            self.model_name,
+            device=device,
+            compute_type=compute_type,
+            cpu_threads=settings.TORCH_CPU_THREADS,
+            num_workers=1,
+        )
         logger.info("Whisper model loaded")
         return model
 

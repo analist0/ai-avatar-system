@@ -26,6 +26,7 @@ import torch
 import torchaudio
 
 from app.config import settings
+from app.hardware import resolve_device
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +104,11 @@ class TTSService:
         try:
             from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
-            device = "cuda" if self._check_cuda() else "cpu"
-            logger.info(f"Loading Chatterbox multilingual TTS on {device}...")
+            device = resolve_device(settings.TTS_DEVICE, self._check_cuda())
+            logger.info(
+                f"Loading Chatterbox multilingual TTS on {device} "
+                f"(profile={settings.HARDWARE_PROFILE}, requested={settings.TTS_DEVICE})..."
+            )
             self.model = await asyncio.to_thread(
                 ChatterboxMultilingualTTS.from_pretrained, device=device
             )

@@ -93,9 +93,39 @@ AvatarAI is an open-source, production-ready platform for building **photorealis
 | 🔐 **Auth & Sessions** | JWT authentication, conversation history, persistent sessions |
 | 📊 **Observability** | Prometheus · Celery Flower · Sentry · structured logging |
 | 🧪 **Tested** | Full pytest suite — users, avatars, sessions, health checks |
+| 📺 **YouTube studio** | Script → talking portrait MP4 + SRT + chapter file. Hebrew-first |
 | 🚀 **AWS GPU Deploy** | One-command `g5.xlarge` deploy with CUDA 11.8 + float16 |
 
 ---
+
+## 📺 YouTube studio
+
+The chat pipeline is a conversation. A YouTube video is a different job: one script, one portrait, one file you upload.
+
+`POST /api/v1/youtube/projects` then `POST /api/v1/youtube/projects/{id}/render` returns:
+
+- **MP4** — H.264 + AAC, faststart, 16:9 / 9:16 / 1:1
+- **SRT** — timed from the real audio, UTF-8, so Hebrew uploads as captions
+- **chapters.txt** and **description.txt** — paste into YouTube. The first chapter is `0:00`
+
+`GET /api/v1/youtube/engines` is the honest inventory of other repos. Short version:
+
+| Repo | What we actually use |
+|---|---|
+| MuseTalk (already here) | Mouth, only when the weights are installed |
+| LivePortrait / SadTalker | The *idea* of a breathing, drifting head. The move is ffmpeg, not their weights |
+| Hallo3 | Render paragraph by paragraph so a long video is not one drifting shot. Hard cuts, no face dissolve |
+| Chatterbox + Edge TTS | The voice, including Hebrew `he-IL-HilaNeural` when the clone is unavailable |
+| LatentSync, EchoMimic V3 | Not wired. Right tools, wrong input (they want a driving video or a 12–18 GB GPU job) |
+| Sonic, Wav2Lip | Refused. Sonic is non-commercial. Wav2Lip's training-data license is not something to ship |
+
+A still photo with MuseTalk missing still renders. The picture breathes. It does not lip-sync, and the finished project says so.
+
+### This workstation (12 GB VRAM, 64 GB RAM, Core Ultra, 20 threads)
+
+The defaults in `app/hardware.py` match that box. The 12 GB card holds **one** model, MuseTalk in float16. Chatterbox and Whisper `small` (int8) run on the CPU, where 64 GB and the spare cores can take them. FFmpeg encodes with 12 threads. Uvicorn stays at one worker, and Celery does not see the GPU — a second process would load a second MuseTalk and run the card out of memory.
+
+LatentSync (~18 GB) and EchoMimic (the whole 12 GB for itself) do not fit next to MuseTalk here. That is a hardware limit, not a missing button.
 
 ## 🏗️ Architecture
 

@@ -129,3 +129,48 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None
+
+
+# YouTube studio
+class YoutubeProjectCreate(BaseModel):
+    avatar_id: str
+    title: str = Field(default="", max_length=120)
+    script: str = Field(..., min_length=1, max_length=20000)
+    language: str = Field(default="he", min_length=2, max_length=8)
+    aspect: str = Field(default="landscape")
+    burn_captions: bool = False
+
+    model_config = {"extra": "forbid"}
+
+
+class YoutubeEngineInfo(BaseModel):
+    id: str
+    role: str
+    source: str
+    license: str
+    taken: str
+    left_out: str
+    status: str
+
+
+class YoutubeProjectResponse(BaseModel):
+    id: str
+    user_id: str
+    avatar_id: str
+    title: str
+    script: str
+    language: str
+    aspect: str
+    burn_captions: bool
+    status: str
+    progress: int
+    error: Optional[str] = None
+    engine: Optional[str] = None
+    video_url: Optional[str] = None
+    srt_url: Optional[str] = None
+    chapters_url: Optional[str] = None
+    description_url: Optional[str] = None
+    project_metadata: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

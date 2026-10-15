@@ -12,9 +12,10 @@ from jose import JWTError, jwt
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import select, text
 
-from app.api.v1 import avatars, conversations, messages, sessions, users, voices
+from app.api.v1 import avatars, conversations, messages, sessions, users, voices, youtube
 from app.config import settings
 from app.database import AsyncSessionLocal, Base, engine
+from app.hardware import apply_cpu_thread_budget
 from app.logging_config import configure_logging
 from app.middleware.rate_limiter import RateLimitMiddleware
 from app.middleware.security import RequestLoggingMiddleware, SecurityHeadersMiddleware
@@ -47,7 +48,15 @@ if settings.SENTRY_DSN:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting AI Avatar System...")
+    logger.info(
+        "Starting AI Avatar System (profile=%s, tts=%s, stt=%s/%s, ffmpeg_threads=%s)...",
+        settings.HARDWARE_PROFILE,
+        settings.TTS_DEVICE,
+        settings.WHISPER_MODEL,
+        settings.STT_DEVICE,
+        settings.FFMPEG_THREADS,
+    )
+    apply_cpu_thread_budget(settings.TORCH_CPU_THREADS)
 
     # Schema management:
     #   * Production runs `alembic upgrade head` in entrypoint.sh BEFORE the
@@ -156,6 +165,7 @@ app.include_router(sessions.router, prefix="/api/v1/sessions", tags=["sessions"]
 app.include_router(conversations.router, prefix="/api/v1/conversations", tags=["conversations"])
 app.include_router(messages.router, prefix="/api/v1/messages", tags=["messages"])
 app.include_router(voices.router, prefix="/api/v1/voices", tags=["voices"])
+app.include_router(youtube.router, prefix="/api/v1/youtube", tags=["youtube"])
 
 
 @app.exception_handler(Exception)
@@ -257,6 +267,16 @@ async def health_check():
         services["stt"] = services["tts"] = f"error: {e}"
 
     health["avatar_engine"] = settings.AVATAR_ENGINE
+    health["hardware"] = {
+        "profile": settings.HARDWARE_PROFILE,
+        "tts_device": settings.TTS_DEVICE,
+        "stt_device": settings.STT_DEVICE,
+        "whisper_model": settings.WHISPER_MODEL,
+        "ffmpeg_threads": settings.FFMPEG_THREADS,
+        "torch_cpu_threads": settings.TORCH_CPU_THREADS,
+        "uvicorn_workers": settings.UVICORN_WORKERS,
+        "gpu_resident": ["musetalk"],
+    }
     health["active_ws_sessions"] = len(websocket_manager.active_connections)
 
     return health

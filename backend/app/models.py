@@ -38,6 +38,9 @@ class User(Base):
     # Relationships
     avatars = relationship("Avatar", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
+    youtube_projects = relationship(
+        "YoutubeProject", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Avatar(Base):
@@ -66,6 +69,9 @@ class Avatar(Base):
     # messages/conversations). Without the cascade, deleting an avatar that
     # had ever been chatted with raised a NOT NULL/FK violation → HTTP 500.
     sessions = relationship("Session", back_populates="avatar", cascade="all, delete-orphan")
+    youtube_projects = relationship(
+        "YoutubeProject", back_populates="avatar", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         # `ORDER BY created_at DESC LIMIT N` is the list-avatars query —
@@ -147,3 +153,47 @@ class Conversation(Base):
 
     # Relationships
     session = relationship("Session", back_populates="conversations")
+
+
+class YoutubeProject(Base):
+    """A scripted talking-avatar video packaged for YouTube.
+
+    This is not a chat session. One row is one upload: portrait + script +
+    voice in, and an MP4 plus captions and chapter markers out.
+    """
+
+    __tablename__ = "youtube_projects"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    avatar_id = Column(
+        String, ForeignKey("avatars.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = Column(String, nullable=False)
+    script = Column(Text, nullable=False)
+    language = Column(String, nullable=False, default="he")
+    aspect = Column(String, nullable=False, default="landscape")  # landscape, portrait, square
+    burn_captions = Column(Boolean, default=False, nullable=False)
+    status = Column(String, default="draft", index=True)  # draft, rendering, ready, failed
+    progress = Column(Integer, default=0, nullable=False)
+    error = Column(Text, nullable=True)
+    engine = Column(String, nullable=True)
+    video_key = Column(String, nullable=True)
+    srt_key = Column(String, nullable=True)
+    chapters_key = Column(String, nullable=True)
+    description_key = Column(String, nullable=True)
+    project_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("User", back_populates="youtube_projects")
+    avatar = relationship("Avatar", back_populates="youtube_projects")
+
+    __table_args__ = (Index("ix_youtube_projects_user_created", "user_id", "created_at"),)
+
+    def asset_keys(self) -> list[str]:
+        return [
+            key
+            for key in (self.video_key, self.srt_key, self.chapters_key, self.description_key)
+            if key
+        ]
