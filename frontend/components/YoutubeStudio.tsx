@@ -110,8 +110,9 @@ export function YoutubeStudio({ avatarId, onNeedAvatar }: Props) {
         <div>
           <h1 className="text-3xl font-black gradient-text mb-2">אולפן יוטיוב</h1>
           <p className="text-gray-400 max-w-2xl">
-            תסריט נכנס, סרטון של האווטר יוצא: MP4, כתוביות, ופרקים. התנועה על תמונה
-            סטטית היא נשימה וסחיפה — ליפ-סינק אמיתי רק כש-MuseTalk מותקן.
+            תסריט נכנס, סרטון של האווטר יוצא: MP4, כתוביות, ופרקים. השרת מכוון לכרטיס
+            של 12GB: ה־GPU שמור ל־MuseTalk, והקול והתמלול רצים על המעבד. בלי המשקולות
+            יש נשימה וסחיפה, לא ליפ-סינק.
           </p>
         </div>
         <button type="button" className="btn-secondary" onClick={() => setShowEngines(v => !v)}>

@@ -58,5 +58,6 @@ echo "[startup] Migrations applied successfully."
 # Ensure runtime directories exist
 mkdir -p voice_profiles /tmp/avatars /tmp/videos /tmp/audio
 
-echo "[startup] Starting uvicorn..."
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers "${UVICORN_WORKERS:-4}"
+# One worker. Each extra worker loads its own MuseTalk into the 12 GB card.
+echo "[startup] Starting uvicorn (workers=${UVICORN_WORKERS:-1})..."
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers "${UVICORN_WORKERS:-1}"

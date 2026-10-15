@@ -59,13 +59,7 @@ services:
       - audio_cache:/tmp/audio
       - voice_profiles:/app/voice_profiles
       - musetalk_models:/app/models
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # The API process owns the GPU. Do not hand Celery a second copy on a 12 GB card.
     logging:
       driver: json-file
       options: { max-size: "100m", max-file: "5" }

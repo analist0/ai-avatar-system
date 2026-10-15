@@ -121,6 +121,12 @@ The chat pipeline is a conversation. A YouTube video is a different job: one scr
 
 A still photo with MuseTalk missing still renders. The picture breathes. It does not lip-sync, and the finished project says so.
 
+### This workstation (12 GB VRAM, 64 GB RAM, Core Ultra, 20 threads)
+
+The defaults in `app/hardware.py` match that box. The 12 GB card holds **one** model, MuseTalk in float16. Chatterbox and Whisper `small` (int8) run on the CPU, where 64 GB and the spare cores can take them. FFmpeg encodes with 12 threads. Uvicorn stays at one worker, and Celery does not see the GPU — a second process would load a second MuseTalk and run the card out of memory.
+
+LatentSync (~18 GB) and EchoMimic (the whole 12 GB for itself) do not fit next to MuseTalk here. That is a hardware limit, not a missing button.
+
 ## 🏗️ Architecture
 
 ```

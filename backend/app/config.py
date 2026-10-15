@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 
+from app.hardware import WORKSTATION_12GB
+
 # Resolve .env path relative to this file's location (always project root)
 _ENV_FILE = str(Path(__file__).resolve().parent.parent.parent / ".env")
 
@@ -63,22 +65,33 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.7
     LLM_MAX_TOKENS: int = 2000
 
-    # Avatar Engine
+    # Workstation: Core Ultra, 20 threads, 64 GB RAM, 12 GB VRAM.
+    # See app/hardware.py. Overrides belong in .env; these defaults match that box.
+    HARDWARE_PROFILE: str = WORKSTATION_12GB.name
+
+    # Avatar Engine. MuseTalk is the only model allowed on the 12 GB card.
     AVATAR_ENGINE: str = "musetalk"  # musetalk, simple
     AVATAR_RESOLUTION: int = 512
     AVATAR_FPS: int = 25
     MUSETALK_PATH: str = "models/MuseTalk"
 
-    # STT Configuration
-    # large-v3-turbo: best 2026 sweet spot — ~216x real-time on GPU, multilingual,
-    # only ~1% lower WER than large-v3. Falls back to base/small if VRAM is tight.
+    # STT stays on the CPU (int8). large-v3-turbo on the GPU does not fit
+    # beside MuseTalk on 12 GB.
     STT_PROVIDER: str = "whisper"  # whisper, google, azure
-    WHISPER_MODEL: str = "large-v3-turbo"  # tiny, base, small, medium, large-v3, large-v3-turbo
+    STT_DEVICE: str = WORKSTATION_12GB.stt_device  # cpu | cuda | auto
+    WHISPER_MODEL: str = WORKSTATION_12GB.whisper_model
+    WHISPER_COMPUTE_TYPE: str = WORKSTATION_12GB.whisper_compute
 
-    # TTS Configuration
-    # chatterbox: Resemble AI's open-source SOTA TTS (default, voice cloning + 23 langs)
+    # TTS. Chatterbox on the CPU uses the 64 GB and the spare cores.
+    # Putting it on the same 12 GB card as MuseTalk OOMs a YouTube render.
     TTS_PROVIDER: str = "chatterbox"
+    TTS_DEVICE: str = WORKSTATION_12GB.tts_device  # cpu | cuda | auto
     TTS_VOICE: str = "default"
+
+    # Encode with 12 of the 20 threads. The other 8 stay with PyTorch and the OS.
+    FFMPEG_THREADS: int = WORKSTATION_12GB.ffmpeg_threads
+    TORCH_CPU_THREADS: int = WORKSTATION_12GB.torch_cpu_threads
+    UVICORN_WORKERS: int = WORKSTATION_12GB.uvicorn_workers
 
     # Security
     # Union[..., str] lets pydantic-settings keep a non-JSON env value as a

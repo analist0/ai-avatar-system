@@ -66,6 +66,16 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - DEBUG=${DEBUG:-true}
+      # 12 GB workstation. MuseTalk is the only GPU resident. See app/hardware.py.
+      - HARDWARE_PROFILE=${HARDWARE_PROFILE:-workstation-12gb}
+      - TTS_DEVICE=${TTS_DEVICE:-cpu}
+      - STT_DEVICE=${STT_DEVICE:-cpu}
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - WHISPER_COMPUTE_TYPE=${WHISPER_COMPUTE_TYPE:-int8}
+      - FFMPEG_THREADS=${FFMPEG_THREADS:-12}
+      - TORCH_CPU_THREADS=${TORCH_CPU_THREADS:-8}
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-1}
+    shm_size: "8gb"
     volumes:
       - ./backend:/app
       - avatar_cache:/tmp/avatars
@@ -88,6 +98,9 @@ services:
     restart: unless-stopped
     deploy:
       resources:
+        limits:
+          # Leave ~16 GB of the 64 GB host for the desktop and the browser.
+          memory: 48G
         reservations:
           devices:
             - driver: nvidia
@@ -137,8 +150,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: avatar-celery-worker
-    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    # No GPU. A second MuseTalk in this process OOMs a 12 GB card.
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=1
     environment:
+      - CUDA_VISIBLE_DEVICES=""
       - DATABASE_URL=postgresql://${DATABASE_USER:-avatar_user}:${DATABASE_PASSWORD:-change_this_password}@postgres:5432/${DATABASE_NAME:-avatar_db}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
@@ -167,13 +182,6 @@ services:
     networks:
       - avatar-network
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
   flower:
     build:

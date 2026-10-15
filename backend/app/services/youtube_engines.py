@@ -109,8 +109,9 @@ def engine_catalog() -> list[dict[str, str]]:
             "taken": "Nothing in the runtime.",
             "left_out": (
                 "Best open re-dub in 2026 comparisons, and the license is clean, "
-                "but it needs a driving video plus about 18 GB of VRAM. A photo "
-                "upload cannot use it. Not wired, rather than a fake button."
+                "but it needs a driving video plus about 18 GB of VRAM. This "
+                "workstation has 12 GB, and that 12 GB is already reserved for "
+                "MuseTalk. A photo upload cannot use LatentSync either."
             ),
             "status": "not_integrated",
         },
@@ -121,9 +122,10 @@ def engine_catalog() -> list[dict[str, str]]:
             "license": "Apache-2.0",
             "taken": "Nothing in the runtime.",
             "left_out": (
-                "Half-body gestures are the right next step for a presenter, and "
-                "the license is usable. The model is a separate GPU job that "
-                "changes identity when it misses. A cropped portrait is not a gesture."
+                "Half-body gestures are the right next step, and the license is "
+                "usable, but EchoMimic wants the whole 12 GB card for itself. "
+                "Loading it beside MuseTalk would OOM this machine. A cropped "
+                "portrait is not a gesture."
             ),
             "status": "not_integrated",
         },

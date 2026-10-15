@@ -24,6 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.voices import VOICE_DIR
+from app.config import settings
 from app.models import Avatar, YoutubeProject
 from app.services.storage import storage_service
 from app.services.tts import SynthResult, tts_service
@@ -142,6 +143,8 @@ def _encode_args() -> list[str]:
         "48000",
         "-ac",
         "2",
+        "-threads",
+        str(settings.FFMPEG_THREADS),
     ]
 
 

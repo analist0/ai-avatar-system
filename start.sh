@@ -359,7 +359,8 @@ if [[ "$MODE" == "dev" ]]; then
   # Start celery worker in background
   source venv/bin/activate
   info "Starting Celery worker"
-  celery -A app.celery_app worker --loglevel=warning --concurrency=2 &
+  # Celery does not get the GPU. The API process owns the 12 GB card.
+  CUDA_VISIBLE_DEVICES="" celery -A app.celery_app worker --loglevel=warning --concurrency=1 &
   CELERY_PID=$!
   deactivate
   cd ..

@@ -24,6 +24,10 @@ from app.services.youtube_script import parse_script
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# MuseTalk is the only model on the 12 GB card. Two renders at once would
+# each spawn inference against that one resident copy.
+_gpu_lock = asyncio.Lock()
+
 
 def _user_id(current_user: Optional[User]) -> str:
     return current_user.id if current_user else "demo-user"
@@ -66,11 +70,14 @@ async def _owned_project(
 
 
 async def _render_in_background(project_id: str) -> None:
-    async with AsyncSessionLocal() as db:
-        try:
-            await render_project(project_id, db)
-        except Exception:
-            logger.exception("Background YouTube render crashed for %s", project_id)
+    if _gpu_lock.locked():
+        logger.info("YouTube render %s waiting for the GPU", project_id)
+    async with _gpu_lock:
+        async with AsyncSessionLocal() as db:
+            try:
+                await render_project(project_id, db)
+            except Exception:
+                logger.exception("Background YouTube render crashed for %s", project_id)
 
 
 @router.get("/engines", response_model=List[YoutubeEngineInfo])
