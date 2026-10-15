@@ -67,6 +67,43 @@ export interface VoiceApiResponse {
   created_at?: string
 }
 
+export interface YoutubeEngine {
+  id: string
+  role: string
+  source: string
+  license: string
+  taken: string
+  left_out: string
+  status: 'builtin' | 'missing' | 'refused' | 'not_integrated' | string
+}
+
+export interface YoutubeProject {
+  id: string
+  avatar_id: string
+  title: string
+  script: string
+  language: string
+  aspect: 'landscape' | 'portrait' | 'square' | string
+  burn_captions: boolean
+  status: 'draft' | 'rendering' | 'ready' | 'failed' | string
+  progress: number
+  error?: string | null
+  engine?: string | null
+  video_url?: string | null
+  srt_url?: string | null
+  chapters_url?: string | null
+  description_url?: string | null
+  project_metadata?: {
+    beats?: number
+    chapters?: string[]
+    estimated_seconds?: number
+    duration_seconds?: number
+    warnings?: string[]
+    voice_cloned?: boolean
+    captions_burned?: boolean
+  } | null
+}
+
 export interface ApiError {
   response?: {
     data?: {

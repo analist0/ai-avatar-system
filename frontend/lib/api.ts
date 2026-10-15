@@ -269,6 +269,46 @@ export const api = {
     return response.data as Blob
   },
 
+  // YouTube studio
+  listYoutubeEngines: async () => {
+    const response = await apiClient.get('/api/v1/youtube/engines')
+    return response.data
+  },
+
+  createYoutubeProject: async (data: {
+    avatar_id: string
+    title?: string
+    script: string
+    language?: string
+    aspect?: string
+    burn_captions?: boolean
+  }) => {
+    const response = await apiClient.post('/api/v1/youtube/projects', data)
+    return response.data
+  },
+
+  listYoutubeProjects: async () => {
+    const response = await apiClient.get('/api/v1/youtube/projects')
+    return response.data
+  },
+
+  getYoutubeProject: async (projectId: string) => {
+    const response = await apiClient.get(`/api/v1/youtube/projects/${projectId}`)
+    return response.data
+  },
+
+  renderYoutubeProject: async (projectId: string) => {
+    const response = await apiClient.post(`/api/v1/youtube/projects/${projectId}/render`, null, {
+      timeout: 20000,
+    })
+    return response.data
+  },
+
+  deleteYoutubeProject: async (projectId: string) => {
+    const response = await apiClient.delete(`/api/v1/youtube/projects/${projectId}`)
+    return response.data
+  },
+
   // Health
   getHealth: async () => {
     const response = await apiClient.get('/health')

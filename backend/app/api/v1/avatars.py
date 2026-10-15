@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.users import get_current_user
 from app.database import get_db
-from app.models import Avatar, User
+from app.models import Avatar, User, YoutubeProject
 from app.schemas import AvatarMetadataUpdate, AvatarRename, AvatarResponse
 from app.services.avatar_processor import avatar_processor
 from app.services.storage import storage_service
@@ -281,6 +281,13 @@ async def delete_avatar(
     if avatar.user_id != _user_id(current_user):
         raise HTTPException(status_code=403, detail="Not authorised to delete this avatar")
 
+    # YouTube renders cascade with the avatar row. Collect their files first,
+    # or the MP4/SRT stay on disk after the row is gone.
+    project_rows = await db.execute(
+        select(YoutubeProject).where(YoutubeProject.avatar_id == avatar_id)
+    )
+    project_keys = [key for project in project_rows.scalars().all() for key in project.asset_keys()]
+
     # Delete the DB row first (sessions/messages/conversations cascade), THEN
     # the stored files — if the DB delete fails we haven't orphaned the row by
     # removing its image out from under it.
@@ -295,6 +302,8 @@ async def delete_avatar(
     try:
         await storage_service.delete_file(avatar.s3_key)
         await storage_service.delete_file(avatar.s3_key.replace("image.jpg", "thumbnail.jpg"))
+        for key in project_keys:
+            await storage_service.delete_file(key)
     except Exception as e:
         # Row is gone; leftover files are harmless and reaped by the cleanup task.
         logger.warning(f"Could not delete stored files for avatar {avatar_id}: {e}")

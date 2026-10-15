@@ -27,6 +27,10 @@ const HistoryPanel = dynamic(
   () => import('@/components/HistoryPanel').then(m => m.HistoryPanel),
   { ssr: false, loading: () => <PanelLoader label="Loading history…" /> },
 )
+const YoutubeStudio = dynamic(
+  () => import('@/components/YoutubeStudio').then(m => m.YoutubeStudio),
+  { ssr: false, loading: () => <PanelLoader label="Loading YouTube studio…" /> },
+)
 const SettingsPanel = dynamic(
   () => import('@/components/SettingsPanel').then(m => m.SettingsPanel),
   { ssr: false, loading: () => <PanelLoader label="Loading settings…" /> },
@@ -55,6 +59,7 @@ import {
   AudioWaveform,
   History,
   Settings,
+  Clapperboard,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -109,7 +114,7 @@ const STATS = [
   { value: '100%', label: 'Self-hostable' },
 ]
 
-type View = 'home' | 'avatars' | 'chat' | 'voice' | 'history' | 'settings'
+type View = 'home' | 'avatars' | 'chat' | 'voice' | 'history' | 'settings' | 'youtube'
 
 export default function Home() {
   const { isAuthenticated, user, clearAuth } = useStore()
@@ -157,6 +162,7 @@ export default function Home() {
     { id: 'home', icon: Sparkles, label: 'Home' },
     { id: 'avatars', icon: Camera, label: 'Avatars' },
     { id: 'voice', icon: Mic2, label: 'Voice' },
+    { id: 'youtube', icon: Clapperboard, label: 'YouTube' },
     { id: 'chat', icon: MessageCircle, label: 'Chat', disabled: !selectedAvatar },
     { id: 'history', icon: History, label: 'History' },
     { id: 'settings', icon: Settings, label: 'Settings' },
@@ -263,11 +269,11 @@ export default function Home() {
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
-                  onClick={() => setView('voice')}
+                  onClick={() => setView(selectedAvatar ? 'youtube' : 'avatars')}
                   className="btn-secondary text-base px-8 py-3.5 rounded-2xl"
                 >
-                  <Mic2 size={18} />
-                  Clone a Voice
+                  <Clapperboard size={18} />
+                  YouTube Video
                 </button>
               </div>
 
@@ -340,6 +346,11 @@ export default function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── YOUTUBE VIEW ── */}
+        {view === 'youtube' && (
+          <YoutubeStudio avatarId={selectedAvatar} onNeedAvatar={() => setView('avatars')} />
         )}
 
         {/* ── VOICE VIEW ── */}
